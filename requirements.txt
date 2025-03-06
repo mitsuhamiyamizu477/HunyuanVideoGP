@@ -2,10 +2,10 @@
 #torchvision
 #torchaudio
 opencv-python==4.9.0.80
-diffusers==0.30.2
-transformers==4.48.0
-peft==0.14.0
-tokenizers==0.21.0
+diffusers==0.31.0 #diffusers==30.2
+transformers==4.39.3 #transformers==4.48.0
+peft==0.13.2 #peft==0.14.0
+tokenizers==0.15.0 #tokenizers==0.21.0
 accelerate==1.1.1
 pandas==2.0.3
 numpy==1.24.4
@@ -15,7 +15,7 @@ loguru==0.7.2
 imageio==2.34.0
 imageio-ffmpeg==0.5.1
 safetensors==0.4.3
-mmgp==3.2.0
+mmgp==3.2.4
 gradio==5.8.0
 moviepy==1.0.3
 #flash-attn==2.7.2.post1
@@ -24,3 +24,5 @@ omegaconf==2.2.3
 lightning
 fire
 av==11.0.0
+
+

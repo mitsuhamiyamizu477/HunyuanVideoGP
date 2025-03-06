@@ -226,9 +226,7 @@ def rotate_half(x):
     return torch.stack([-x_imag, x_real], dim=-1).flatten(3)
 
 
-def apply_rotary_emb(
-    xq: torch.Tensor,
-    xk: torch.Tensor,
+def apply_rotary_emb( qklist,
     freqs_cis: Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]],
     head_first: bool = False,
 ) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -250,6 +248,8 @@ def apply_rotary_emb(
         Tuple[torch.Tensor, torch.Tensor]: Tuple of modified query tensor and key tensor with rotary embeddings.
 
     """
+    xq, xk = qklist
+    qklist.clear()
     xk_out = None
     if isinstance(freqs_cis, tuple):
         cos, sin = reshape_for_broadcast(freqs_cis, xq, head_first)  # [S, D]
@@ -259,10 +259,21 @@ def apply_rotary_emb(
         xq_dtype = xq.dtype
         xq_out = xq.to(torch.float)
         xq = None        
-        xq_out = (xq_out * cos + rotate_half(xq_out) * sin).to(xq_dtype)
+        xq_rot = rotate_half(xq_out)
+        xq_out *= cos
+        xq_rot *= sin
+        xq_out += xq_rot
+        del xq_rot
+        xq_out = xq_out.to(xq_dtype)
+
         xk_out = xk.to(torch.float)
         xk = None
-        xk_out = (xk_out * cos + rotate_half(xk_out) * sin).to(xq_dtype)
+        xk_rot = rotate_half(xk_out)
+        xk_out *= cos
+        xk_rot *= sin
+        xk_out += xk_rot
+        del xk_rot
+        xk_out = xk_out.to(xq_dtype)
     else:
         # view_as_complex will pack [..., D/2, 2](real) to [..., D/2](complex)
         xq_ = torch.view_as_complex(
@@ -282,37 +293,6 @@ def apply_rotary_emb(
     return xq_out, xk_out
 
 
-def _apply_rotary_emb(
-    xq: torch.Tensor,
-    xk: torch.Tensor,
-    freqs_cis: Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]],
-    head_first: bool = False,
-) -> Tuple[torch.Tensor, torch.Tensor]:
-    xk_out = None
-    if isinstance(freqs_cis, tuple):
-        cos, sin = reshape_for_broadcast(freqs_cis, xq, head_first)  # [S, D]
-        cos, sin = cos.to(xq.device), sin.to(xq.device)
-        # real * cos - imag * sin
-        # imag * cos + real * sin
-        xq_out = (xq.float() * cos + rotate_half(xq.float()) * sin).type_as(xq)
-        xk_out = (xk.float() * cos + rotate_half(xk.float()) * sin).type_as(xk)
-    else:
-        # view_as_complex will pack [..., D/2, 2](real) to [..., D/2](complex)
-        xq_ = torch.view_as_complex(
-            xq.float().reshape(*xq.shape[:-1], -1, 2)
-        )  # [B, S, H, D//2]
-        freqs_cis = reshape_for_broadcast(freqs_cis, xq_, head_first).to(
-            xq.device
-        )  # [S, D//2] --> [1, S, 1, D//2]
-        # (real, imag) * (cos, sin) = (real * cos - imag * sin, imag * cos + real * sin)
-        # view_as_real will expand [..., D/2](complex) to [..., D/2, 2](real)
-        xq_out = torch.view_as_real(xq_ * freqs_cis).flatten(3).type_as(xq)
-        xk_ = torch.view_as_complex(
-            xk.float().reshape(*xk.shape[:-1], -1, 2)
-        )  # [B, S, H, D//2]
-        xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(3).type_as(xk)
-
-    return xq_out, xk_out
 def get_nd_rotary_pos_embed(
     rope_dim_list,
     start,

@@ -174,7 +174,7 @@ class MMDoubleStreamBlock(nn.Module):
         ) = self.txt_mod(vec).chunk(6, dim=-1)
 
         ##### Enjoy this spagheti VRAM optimizations done by DeepBeepMeep !
-        # I am sure you are a nice person and as you copy this code, you will give me proper credits:
+        # I am sure you are a nice person and as you copy this code, you will give me officially proper credits:
         # Please link to https://github.com/deepbeepmeep/HunyuanVideoGP and @deepbeepmeep on twitter  
 
         # Prepare image for attention.
@@ -195,13 +195,9 @@ class MMDoubleStreamBlock(nn.Module):
         img_kv_len= img_k.shape[1]        
         batch_size = img_k.shape[0]
         # Apply RoPE if needed.
-        if freqs_cis is not None:
-            img_qq, img_kk = apply_rotary_emb(img_q, img_k, freqs_cis, head_first=False)
-            assert (
-                img_qq.shape == img_q.shape and img_kk.shape == img_k.shape
-            ), f"img_kk: {img_qq.shape}, img_q: {img_q.shape}, img_kk: {img_kk.shape}, img_k: {img_k.shape}"
-            img_q, img_k = img_qq, img_kk
-            del img_qq, img_kk
+        qklist = [img_q, img_k]
+        del img_q, img_k
+        img_q, img_k = apply_rotary_emb(qklist, freqs_cis, head_first=False)
         # Prepare txt for attention.
         txt_modulated = self.txt_norm1(txt)
         modulate_(txt_modulated, shift=txt_mod1_shift, scale=txt_mod1_scale )
@@ -405,19 +401,15 @@ class MMSingleStreamBlock(nn.Module):
         self.q_norm.apply_(txt_q)
         self.k_norm.apply_(txt_k)
 
-        # Apply RoPE if needed.
-        if freqs_cis is not None:
-            img_qq, img_kk = apply_rotary_emb(img_q, img_k, freqs_cis, head_first=False)
-            assert (
-                img_qq.shape == img_q.shape and img_kk.shape == img_k.shape
-            ), f"img_kk: {img_qq.shape}, img_q: {img_q.shape}, img_kk: {img_kk.shape}, img_k: {img_k.shape}"
-            img_q, img_k = img_qq, img_kk
-            img_q_len=img_q.shape[1]
-            q = torch.cat((img_q, txt_q), dim=1)
-            del img_q, txt_q, img_qq,
-            k = torch.cat((img_k, txt_k), dim=1)
-            img_kv_len=img_k.shape[1]
-            del img_k, txt_k, img_kk
+        qklist = [img_q, img_k]
+        del img_q, img_k
+        img_q, img_k = apply_rotary_emb(qklist, freqs_cis, head_first=False)
+        img_q_len=img_q.shape[1]
+        q = torch.cat((img_q, txt_q), dim=1)
+        del img_q, txt_q
+        k = torch.cat((img_k, txt_k), dim=1)
+        img_kv_len=img_k.shape[1]
+        del img_k, txt_k
         
         v = torch.cat((img_v, txt_v), dim=1)
         del img_v, txt_v
@@ -551,6 +543,8 @@ class HYVideoDiffusionTransformer(ModelMixin, ConfigMixin):
     ):
         factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__()
+
+        # mm_double_blocks_depth , mm_single_blocks_depth = 5, 5 
 
         self.patch_size = patch_size
         self.in_channels = in_channels
@@ -976,5 +970,13 @@ HUNYUAN_VIDEO_CONFIG = {
         "heads_num": 24,
         "mlp_width_ratio": 4,
         "guidance_embed": True,
+    },
+    "HYVideo-S/2": {
+        "mm_double_blocks_depth": 6,
+        "mm_single_blocks_depth": 12,
+        "rope_dim_list": [12, 42, 42],
+        "hidden_size": 480,
+        "heads_num": 5,
+        "mlp_width_ratio": 4,
     },
 }

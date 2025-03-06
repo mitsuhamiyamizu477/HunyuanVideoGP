@@ -3,7 +3,7 @@
 [中文阅读](./README_zh.md)
 
 
-# HunyuanVideoGP: Large Video Generation for the GPU Poor
+# HunyuanVideoGP: Text2Video and Image2Video Generation for the GPU Poor
 <div align="center">
   <a href="https://github.com/Tencent/HunyuanVideo"><img src="https://img.shields.io/static/v1?label=HunyuanVideo Code&message=Github&color=blue&logo=github-pages"></a> &ensp;
   <a href="https://aivideo.hunyuan.tencent.com"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=Web&color=green&logo=github-pages"></a> &ensp;
@@ -17,6 +17,8 @@
 
 
 ## News
+* 03/06/2025: Version 6.0: Support for HunyanVideo Image to Video with Fast generation, Low VRAM (up to 12s video) and Lora support 
+* 02/27/2025: Version 5.1: Added Loras Preset to easily store and share combinations of loras and their multipliers 
 * 02/25/2025: Version 5.0: **Out Of this World Release by DeepBeepMeep that lands only in HunyuanVideo GP: VRAM laws have been broken as VRAM consumption has been divided by 3 and 20%-50% faster at no quality loss !**
 
 *You can now generate videos that lasts up to 10s of 1280x720 and 16s of 848x480 with 24 GB of VRAM with Loras and no quantization !!!*
@@ -137,17 +139,23 @@ pip install https://github.com/deepbeepmeep/SageAttention/raw/refs/heads/main/re
 python gradio_server.py
 ```
 
-Every lora stored in the subfoler 'loras' will be automatically loaded. You will be then able to activate / desactive any of them when running the application
 
-You can also pre activate some loras and specify their corresponding multipliers when loading the app:
+### Loras support
+
+Every lora stored in the subfoler 'loras' will be automatically loaded. You will be then able to activate / desactive any of them when running the application.
+
+For each activated Lora, you may specify a *multiplier* that is one float number that corresponds to its weight (default is 1.0), alternatively you may specify a list of floats multipliers separated by a "," that gives the evolution of this Lora's multiplier over the steps. For instance let's assume there are 30 denoising steps and the multiplier is *0.9,0.8,0.7* then for the steps ranges 0-9, 10-19 and 20-29 the Lora multiplier will be respectively 0.9, 0.8 and 0.7.
+
+You can edit, save or delete Loras presets (combinations of loras with their corresponding multipliers) directly from the gradio interface. Each preset, is a file with ".lset" extension stored in the loras directory and can be shared with other users
+
+Then you can pre activate loras corresponding to a preset when launching the gradio server:
 ```bash
-python gradio_server.py --lora-weight lora.safetensors --lora-multiplier 1
+python gradio_server.py --lora-preset  mylorapreset.lset # where 'mylorapreset.lset' is a preset stored in the 'loras' folder
 ```
 
-For each activated Lora, you may specify one float number that corresponds to its weight, alternatively you may specify a list of floats separated by a "," that gives the evolution of this Lora over the steps. For instance let's assume there are 30 denoising steps and the multiplier is *0.9,0.8,0.7* then for the steps ranges 0-9, 10-19 and 20-29 the Lora multiplier will be respectively 0.9, 0.8 and 0.7.
+Please note that command line parameters *--lora-weight* and *--lora-multiplier* have been deprecated since they are redundant with presets.
 
-
-You can find prebuilt Loras on https://civitai.com/ or build them with tools such kohya or onetrainer.
+You can find prebuilt Loras on https://civitai.com/ or build them with tools such as kohya or onetrainer.
 
 ### Give me Speed !
 If you are a speed addict and are ready to accept some tradeoff on the quality I have added two switches:
@@ -178,8 +186,7 @@ python gradio_server.py --attention sage --compile
 --profile no : default (4) : no of profile between 1 and 5\
 --quantize-transformer bool: (default True) : enable / disable on the fly transformer quantization\
 --lora-dir path : Path of directory that contains Loras in diffusers / safetensor format\
---lora-weight path1 path2 ... : list of Loras Path preselected Loras\
---lora-multiplier float mult1 mult2 ... : list of relative weights for each preselected Lora. The corresponding Lora file must be in the diffusers format.\
+--lora-preset preset : name of preset gile (without the extension) to preload
 --verbose level : default (1) : level of information between 0 and 2\
 --server-port portno : default (7860) : Gradio port no\
 --server-name name : default (0.0.0.0) : Gradio server name\

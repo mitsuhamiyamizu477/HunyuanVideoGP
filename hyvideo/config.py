@@ -37,20 +37,6 @@ def add_network_args(parser: argparse.ArgumentParser):
         help="Path to a directory that contains Loras for i2v"
     )
 
-    group.add_argument(
-        "--lora-weight-i2v",
-        nargs='+',
-        default=[],
-        help="List of individual Lora files paths for i2v"
-    )
-
-    group.add_argument(
-        "--lora-multiplier-i2v",
-        nargs='+',
-        default=[],
-        help="List of Lora multipliers for i2v"
-    )
-
 
     group.add_argument(
         "--lora-dir",
@@ -59,18 +45,19 @@ def add_network_args(parser: argparse.ArgumentParser):
         help="Path to a directory that contains Loras"
     )
 
+
     group.add_argument(
-        "--lora-weight",
-        nargs='+',
-        default=[],
-        help="List of individual Lora files paths"
+        "--lora-preset",
+        type=str,
+        default="",
+        help="Lora preset to preload"
     )
 
     group.add_argument(
-        "--lora-multiplier",
-        nargs='+',
-        default=[],
-        help="List of Lora multipliers"
+        "--lora-preset-i2v",
+        type=str,
+        default="",
+        help="Lora preset to preload for i2v"
     )
 
     group.add_argument(
@@ -150,6 +137,33 @@ def add_network_args(parser: argparse.ArgumentParser):
     default="",
     help="vae config mode"
     )    
+    
+    parser.add_argument(
+        "--share",
+        action="store_true",
+        help="Create a shared URL to access webserver remotely"
+    )
+
+    parser.add_argument(
+    "--lock-config",
+    action="store_true",
+    help="Prevent modifying the configuration from the web interface"
+    )
+
+    parser.add_argument(
+        "--preload",
+        type=str,
+        default="0",
+        help="Megabytes of the diffusion model to preload in VRAM"
+    )
+
+    parser.add_argument(
+        "--multiple-images",
+        action="store_true",
+        help="Allow inputting multiple images with image to video"
+    )
+
+
     # Main model
     group.add_argument(
         "--model",
