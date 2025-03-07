@@ -17,7 +17,8 @@
 
 
 ## News
-* 03/06/2025: Version 6.0: Support for HunyanVideo Image to Video with Fast generation, Low VRAM (up to 12s video) and Lora support 
+* 03/06/2025: Version 6.0: Support for HunyanVideo Image to Video with Fast generation, Low VRAM (up to 12s video) and Lora support\ 
+          You need to do a **pip install -r requirements.txt** if you had already installed the app
 * 02/27/2025: Version 5.1: Added Loras Preset to easily store and share combinations of loras and their multipliers 
 * 02/25/2025: Version 5.0: **Out Of this World Release by DeepBeepMeep that lands only in HunyuanVideo GP: VRAM laws have been broken as VRAM consumption has been divided by 3 and 20%-50% faster at no quality loss !**
 
@@ -73,7 +74,7 @@ You will find the original Hunyuan Video repository here: https://github.com/Ten
 We provide an `environment.yml` file for setting up a Conda environment.
 Conda's installation instructions are available [here](https://docs.anaconda.com/free/miniconda/index.html).
 
-This app has been tested on Python 3.10 / Pytorch 2.5.1 - 2.6.0  / Cuda 12.4.\
+This app has been tested on Python 3.10.9 /  2.6.0  / Cuda 12.4.\
 (Pytorch compilation will not properly work for long video on Pytorch 2.5.1)
 
 ```shell
@@ -84,8 +85,6 @@ conda activate HunyuanVideo
 # OR
 
 # 1 - venv. Alternatively create a python 3.10 venv and then do the following
-pip install torch==2.5.1 torchvision torchaudio --index-url https://download.pytorch.org/whl/test/cu124  # if pytorch 2.5.1
-#or 
 pip install torch==2.6.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/test/cu124  # if pytorch 2.6.0
 
 
@@ -98,9 +97,9 @@ python -m pip install flash-attn==2.7.2.post1
 # 3.2 optional Sage attention support (30% faster, easy to install on Linux but much harder on Windows)
 python -m pip install sageattention==1.0.6 
 
-# or for Sage Attention 2 (40% faster, sorry only manual compilation for the moment)
-git pull https://github.com/thu-ml/SageAttention
-cd sageattention 
+# or for Sage Attention 2 (40% faster, sorry, only manual compilation for the moment)
+git clone https://github.com/thu-ml/SageAttention
+cd SageAttention 
 pip install -e .
 
 # 3.3 optional Xformers attention support (same speed as sdpa attention but lower VRAM requirements, easy to install on Linux but much harder on Windows)
@@ -115,8 +114,6 @@ Likewise *Pytorch Compilation* will work on Windows only if you manage to instal
 I provide here links to simplify the installation for Windows users with Python 3.10 / Pytorch 2.51 / Cuda 12.4. As I am not hosting these files I won't be able to provide support neither guarantee they do what they should do.
 - Triton attention (needed for *pytorch compilation* and *Sage attention*)
 ```
-pip install https://github.com/woct0rdho/triton-windows/releases/download/v3.1.0-windows.post8/triton-3.1.0-cp310-cp310-win_amd64.whl # triton for pytorch 2.6.0
-#or 
 pip install https://github.com/woct0rdho/triton-windows/releases/download/v3.2.0-windows.post9/triton-3.2.0-cp310-cp310-win_amd64.whl # triton for pytorch 2.6.0
 ```
 - Xformers attention
@@ -126,8 +123,6 @@ pip install https://download.pytorch.org/whl/cu124/xformers-0.0.29.post1-cp310-c
 
 - Sage attention
 ```
-pip install https://github.com/sdbds/SageAttention-for-windows/releases/download/2.0.1/sageattention-2.0.1+cu124torch2.5.1-cp310-cp310-win_amd64.whl # for pytorch 2.5.1
-# Or
 pip install https://github.com/deepbeepmeep/SageAttention/raw/refs/heads/main/releases/sageattention-2.1.0-cp310-cp310-win_amd64.whl # for pytorch 2.6.0 (experimental, if it works, otherwise you you will need to install and compile manually, see above) 
  
 ```
@@ -135,10 +130,15 @@ pip install https://github.com/deepbeepmeep/SageAttention/raw/refs/heads/main/re
 ## Run the application
 
 ### Run a Gradio Server on port 7860 (recommended)
+To run the Text to Video application:
 ```bash
 python gradio_server.py
 ```
 
+To run the Image to Video application:
+```bash
+python gradio_server.py --i2v
+```
 
 ### Loras support
 
@@ -157,7 +157,7 @@ Please note that command line parameters *--lora-weight* and *--lora-multiplier*
 
 You can find prebuilt Loras on https://civitai.com/ or build them with tools such as kohya or onetrainer.
 
-### Give me Speed !
+### Give me Speed (Text 2 Video only for the moment) !
 If you are a speed addict and are ready to accept some tradeoff on the quality I have added two switches:
 - Fast Hunyuan Video enabled by default + Sage Attention + Teacache (an advanced acceleration algorithm x2 the speed for a small quality cost)
 ```bash
@@ -209,6 +209,9 @@ Profile 2 (High RAM) and 4 (Low RAM)are the most recommended profiles since they
 However, a safe approach is to start from profile 5 (default profile) and then go down progressively to profile 4 and then to profile 2 as long as the app remains responsive or doesn't trigger any out of memory error.
 
 ### Other Models for the GPU Poor
+- Wan2GP: https://github.com/deepbeepmeep/Wan2GP :\
+Another great 3D Image to Video and Text to Video generator. It can run on very low config as one its models is only 1.5 B parameters
+
 - Hunyuan3D-2GP: https://github.com/deepbeepmeep/Hunyuan3D-2GP :\
 A great image to 3D and text to 3D tool by the Tencent team. Thanks to mmgp it can run with less than 6 GB of VRAM
 

@@ -174,8 +174,8 @@ def preprocess_loras(sd):
                      "linear2", "modulation",  "mlp_fc1"]
         src_list = [k +"_" for k in repl_list] +  ["_" + k for k in repl_list]
         tgt_list = [k +"." for k in repl_list] +  ["." + k for k in repl_list]
-
         if k.startswith("Hunyuan_video_I2V_lora_"):
+            # crappy conversion script for non reversible lora naming  
             k = k.replace("Hunyuan_video_I2V_lora_","diffusion_model.")
             k = k.replace("lora_up","lora_B")
             k = k.replace("lora_down","lora_A")

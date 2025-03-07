@@ -1047,26 +1047,47 @@ class HunyuanVideoPipeline(DiffusionPipeline):
                 with torch.autocast(
                     device_type="cuda", dtype=target_dtype, enabled=autocast_enabled
                 ):
-                    ret = self.transformer(  # For an input image (129, 192, 336) (1, 256, 256)
-                        latent_model_input,  # [2, 16, 33, 24, 42]
-                        t_expand,  # [2]
-                        text_states=prompt_embeds,  # [2, 256, 4096]
-                        text_mask=prompt_mask,  # [2, 256]
-                        text_states_2=prompt_embeds_2,  # [2, 768]
-                        freqs_cos=freqs_cis[0],  # [seqlen, head_dim]
-                        freqs_sin=freqs_cis[1],  # [seqlen, head_dim]
-                        guidance=guidance_expand,
-                        pipeline=self,
-                        return_dict=True,
-                    )
-                    
-                    if self._interrupt:
-                        return [None]
-                    noise_pred= ret["x"]
+                    if self.do_classifier_free_guidance:
+                        for i in range(2):
+                            ret = self.transformer(  # For an input image (129, 192, 336) (1, 256, 256)
+                                latent_model_input[i].unsqueeze(0),  # [2, 16, 33, 24, 42]
+                                t_expand[i].unsqueeze(0),  # [2]
+                                text_states=prompt_embeds[i].unsqueeze(0),  # [2, 256, 4096]
+                                text_mask=prompt_mask[i].unsqueeze(0),  # [2, 256]
+                                text_states_2=prompt_embeds_2[i].unsqueeze(0),  # [2, 768]
+                                freqs_cos=freqs_cis[0],  # [seqlen, head_dim]
+                                freqs_sin=freqs_cis[1],  # [seqlen, head_dim]
+                                guidance=guidance_expand,
+                                pipeline=self,
+                                return_dict=True,
+                            )
+                            if self._interrupt:
+                                return [None]
+                            if i==0:
+                                noise_pred_uncond= ret["x"]
+                            else:
+                                noise_pred_text = ret["x"]
+                    else:
+                        ret = self.transformer(  # For an input image (129, 192, 336) (1, 256, 256)
+                            latent_model_input,  # [2, 16, 33, 24, 42]
+                            t_expand,  # [2]
+                            text_states=prompt_embeds,  # [2, 256, 4096]
+                            text_mask=prompt_mask,  # [2, 256]
+                            text_states_2=prompt_embeds_2,  # [2, 768]
+                            freqs_cos=freqs_cis[0],  # [seqlen, head_dim]
+                            freqs_sin=freqs_cis[1],  # [seqlen, head_dim]
+                            guidance=guidance_expand,
+                            pipeline=self,
+                            return_dict=True,
+                        )
+
+                        if self._interrupt:
+                            return [None]
+                        noise_pred= ret["x"]
 
                 # perform guidance
                 if self.do_classifier_free_guidance:
-                    noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                    # noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                     noise_pred = noise_pred_uncond + self.guidance_scale * (
                         noise_pred_text - noise_pred_uncond
                     )
