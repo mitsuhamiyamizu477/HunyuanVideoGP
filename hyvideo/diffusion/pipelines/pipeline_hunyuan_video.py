@@ -1004,6 +1004,7 @@ class HunyuanVideoPipeline(DiffusionPipeline):
         load_latent = True
         load_latent = False
 
+        multi_passes_free_guidance = True
         if load_latent:
             timesteps = []
         # if is_progress_bar:
@@ -1047,7 +1048,7 @@ class HunyuanVideoPipeline(DiffusionPipeline):
                 with torch.autocast(
                     device_type="cuda", dtype=target_dtype, enabled=autocast_enabled
                 ):
-                    if self.do_classifier_free_guidance:
+                    if self.do_classifier_free_guidance and multi_passes_free_guidance:
                         for i in range(2):
                             ret = self.transformer(  # For an input image (129, 192, 336) (1, 256, 256)
                                 latent_model_input[i].unsqueeze(0),  # [2, 16, 33, 24, 42]
@@ -1087,11 +1088,11 @@ class HunyuanVideoPipeline(DiffusionPipeline):
 
                 # perform guidance
                 if self.do_classifier_free_guidance:
-                    # noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                    if not multi_passes_free_guidance:
+                        noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                     noise_pred = noise_pred_uncond + self.guidance_scale * (
                         noise_pred_text - noise_pred_uncond
                     )
-
                 if self.do_classifier_free_guidance and self.guidance_rescale > 0.0:
                     # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
                     noise_pred = rescale_noise_cfg(
@@ -1099,6 +1100,7 @@ class HunyuanVideoPipeline(DiffusionPipeline):
                         noise_pred_text,
                         guidance_rescale=self.guidance_rescale,
                     )
+                    del noise_pred_uncond, noise_pred_text
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(
