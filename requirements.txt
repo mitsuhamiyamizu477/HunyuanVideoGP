@@ -1,7 +1,7 @@
 torch==2.6.0
 torchvision
 torchaudio
-xformers==0.0.29
+xformers==0.0.29.post1
 optimum-quanto
 opencv-python==4.9.0.80
 diffusers==0.31.0 #diffusers==30.2
